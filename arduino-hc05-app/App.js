@@ -1,69 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList } from 'react-native';
-import BleManager from 'react-native-ble-manager';
+import { View, Picker, Button } from 'react-native';
+import BluetoothSerial from 'react-native-bluetooth-serial';  // You'll need to install this package
 
-const App = () => {
-  const [isScanning, setIsScanning] = useState(false);
-  const [devices, setDevices] = useState([]);
-  const [connectedDevice, setConnectedDevice] = useState(null);
-  const [receivedData, setReceivedData] = useState(null);
+export default function App() {
+  const [availableDevices, setAvailableDevices] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
+  // Fetch available Bluetooth devices
   useEffect(() => {
-    BleManager.start({ showAlert: false });
+    async function fetchDevices() {
+      try {
+        const devices = await BluetoothSerial.list();
+        setAvailableDevices(devices);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchDevices();
   }, []);
 
-  const startScan = () => {
-    setIsScanning(true);
-    BleManager.scan([], 5, true)
-      .then(() => {
-        console.log('Scanning...');
-      });
-  };
-
-  const stopScan = () => {
-    setIsScanning(false);
-    BleManager.stopScan()
-      .then(() => {
-        console.log('Scan stopped');
-      });
-  };
-
-  const connectToDevice = (device) => {
-    BleManager.connect(device.id)
-      .then(() => {
-        console.log('Connected to ' + device.id);
-        setConnectedDevice(device);
-      })
-      .catch((error) => {
-        console.log('Connection failed', error);
-      });
-  };
-
-  // Add your logic to perform operations based on receivedData
+  // Handle device selection and attempt to connect
+  /*const handlePickerChange = async (itemValue) => {
+    try {
+      const connected = await BluetoothSerial.connect(itemValue);  // Attempt to connect
+      setIsConnected(connected);
+      setSelectedDevice(itemValue);
+    } catch (error) {
+      console.log(error);
+      setIsConnected(false);
+    }
+  };*/
 
   return (
     <View>
-      <Text>HC05 Bluetooth Communication</Text>
-      <Button title={isScanning ? 'Stop Scan' : 'Start Scan'} onPress={isScanning ? stopScan : startScan} />
-      <FlatList
-        data={devices}
-        renderItem={({ item }) => (
-          <Button title={item.name || item.id} onPress={() => connectToDevice(item)} />
-        )}
-        keyExtractor={(item) => item.id}
-      />
-      <Text>Received Data: {receivedData}</Text>
+      {//<Picker
+        /*selectedValue={selectedDevice}
+        onValueChange={(itemValue) => handlePickerChange(itemValue)}
+      >
+        {availableDevices.map((device, index) => (
+          <Picker.Item key={index} label={device.name} value={device.id} />
+        ))}
+      </Picker>*/
+      //<Button title="Connect" onPress={() => { /* Additional actions if needed */ }} /> 
+      }
+      <Text>{availableDevices}</Text>
     </View>
   );
-};
-
-export default App;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+}
